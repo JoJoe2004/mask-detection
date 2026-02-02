@@ -132,8 +132,8 @@
             const prediction = await model.predict(webcam.canvas);
 
             // สมมติ class 0 = Mask, class 1 = No Mask
-            const maskProb = prediction[0].probability * 100;
-            const noMaskProb = prediction[1].probability * 100;
+            const noMaskProb = prediction[0].probability * 100;
+            const maskProb = prediction[1].probability * 100;
 
             document.getElementById("maskBar").style.width = maskProb + "%";
             document.getElementById("noMaskBar").style.width = noMaskProb + "%";
@@ -147,4 +147,5 @@
 
 </body>
 </html>
+
 
