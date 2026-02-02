@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mask Detection</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            text-align: center;
+            padding: 30px;
+        }
+
+        button {
+            padding: 10px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: gray;
+        }
+
+        #webcam-container canvas {
+            margin-top: 20px;
+            border-radius: 12px;
+            border: 4px solid #333;
+        }
+
+        .progress-box {
+            width: 300px;
+            margin: 20px auto;
+            text-align: left;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 22px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .mask {
+            background: green;
+        }
+
+        .nomask {
+            background: red;
+        }
+
+        .percent {
+            text-align: right;
+            font-size: 14px;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>😷 Face Mask Detection</h1>
+    <button id="startBtn" onclick="init()">Start Webcam</button>
+
+    <div id="webcam-container"></div>
+
+    <!-- Progress Bars -->
+    <div class="progress-box">
+        <div class="label">❌ No Mask</div>
+        <div class="progress">
+            <div id="maskBar" class="bar mask"></div>
+        </div>
+        <div id="maskPercent" class="percent">0%</div>
+    </div>
+
+    <div class="progress-box">
+        <div class="label">😷 Mask</div>
+        <div class="progress">
+            <div id="noMaskBar" class="bar nomask"></div>
+        </div>
+        <div id="noMaskPercent" class="percent">0%</div>
+    </div>
+
+    <script>
+        const URL = "https://teachablemachine.withgoogle.com/models/6yEm2-FU_/";
+
+        let model, webcam;
+
+        async function init() {
+            document.getElementById("startBtn").disabled = true;
+
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+
+            webcam = new tmImage.Webcam(224, 224, true);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container")
+                .appendChild(webcam.canvas);
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+
+            // สมมติ class 0 = Mask, class 1 = No Mask
+            const maskProb = prediction[0].probability * 100;
+            const noMaskProb = prediction[1].probability * 100;
+
+            document.getElementById("maskBar").style.width = maskProb + "%";
+            document.getElementById("noMaskBar").style.width = noMaskProb + "%";
+
+            document.getElementById("maskPercent").innerText =
+                maskProb.toFixed(1) + "%";
+            document.getElementById("noMaskPercent").innerText =
+                noMaskProb.toFixed(1) + "%";
+        }
+    </script>
+
+</body>
+</html>
